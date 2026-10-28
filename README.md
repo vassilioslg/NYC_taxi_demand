@@ -1,5 +1,38 @@
-# Predicting daily yellow taxi demand for New York City using SARIMA / SARIMAX time series analysis
 
+# Predicting Daily Yellow Taxi Demand for New York City using SARIMA / SARIMAX Time Series Analysis
 
-<img width="880" height="493" alt="Screenshot 2026-10-28 at 10 35 54" src="https://github.com/user-attachments/assets/cc8d208f-117c-4509-a6e5-192ed84cd66d" />
+## Abstract
+pickle files
+
+## I. Exploratory Data Analysis
+
+The data used in this analysis is available at https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page. The analysis focuses purely on yellow taxi demand (as opposed to other NYC taxi types). The data contains records for every single recorded yellow taxi trip made within New York City for the dates between 2024-10-01 to 2026-08-31. The pickup time is recorded in accordance to when the taxi limiter begins operation. To allow for daily predictions, the data was made more coarse by resampling the observational period to within-day. The data was thus grouped by daily observations and the number of rides for each day was counted within each day. The resulting time series was then plotted to allow for qualitative deductions  
+<img width="4800" height="2400" alt="Daily Rides Demand Series" src="https://github.com/user-attachments/assets/7c604e00-31ab-45b6-afcd-b7f41dc3a2d5" />
+Plotting the data in this way allowed for a few key observations to be made. Firstly, there doesn't seem to be an obvious trend in either the upwards or downwards direction throughout the time period. The trend seems to be more complex. tending to be slightly upwards or increasing until January 2026, followed by a sharp drop in demand, after which an almost constant trend is observed for the remaining time. The key observation is the obvious weekly seasonality which is present, though there a more subtle trend which occurs almost on a per annum basis is also noted. The data also displays sharp troughs between the months of January and April of 2026 and further within January of 2025, which should be investigated as anomalies. 
+
+Breaking the series down into its seasonal and trend components using STL (seasonal and trend decomposition using LOESS) further evidences clear seasonality, in addition to validating the prior trend analysis. 
+<img width="4800" height="3600" alt="Decomposition Plots" src="https://github.com/user-attachments/assets/244ea8ea-a84f-4698-a2cb-27a7809af6cf" />
+
+To further explore the data, autocorrelation and partial autocorrelation function (ACF and PACF) plots were generated. The ACF and PACF plots are correlograms that allow us to ascertain the level of correlation between an observation in time and its lagged variables. The PACF differs from ACF in that it only considers direct correlation between an observation and its lagged variables, thus controlling for the effects of all intermediate lags. The PACF and ACF plots are keystones in informing the order (i.e. number of lags to consider) of the SARIMA(X) model. The ACF plot informs the MA (moving average) portion of the model whilst the PACF informs the AR (autoregressive) part of the model. Within both our ACF and PACF plots we see evidence of significant correlations at every 7 day interval, which strongly suggests weekly seasonality. The plots therefore both support that the data cannot be well modeled by a typical ARMA process and indicate that a SARIMA process with weekly seasonality should be used instead. 
+<img width="3600" height="2400" alt="ACF and PACF Plots" src="https://github.com/user-attachments/assets/11060dde-70cf-43bd-b753-6976ea8fe12f" />
+
+## II. Data Processing 
+In order to allow for effective time series analysis, the data was further processed as such. Firstly, the series was normalized to allow for easier visualization and improved numerical stability. Furthermore, The Augmented Dickey-Fuller test returned an ADF statistic of 0.0217 which evidences stationarity at the 5% confidence level (i.e. we can reject the null hypothesis that the series has a unit root with 95% confidence). The series was subsequently transformed using a Yeo-Johnson transformation in order to stabilize the variance, and first differenced to further induce stationarity, which reduced the ADF statistic to within the 0.1% significance level. The resultant data was then plotted, from which we can observe clear stationarity (i.e. constant variance and mean = 0) 
+<img width="5100" height="3600" alt="Normalised and Differenced Series" src="https://github.com/user-attachments/assets/77862732-ad62-4ba3-8e61-fb6371d0a26f" />
+
+## III. Training a SARIMA Model and Obtaining Predictions
+In order to select the best hyper-parameters for the SARIMA model, hyper-parameters were tuned by generating a combination of orders using the itertools library and training a SARIMA model for each unique combination. The overall final order was then informed by the AIC score of each model, selecting the parameters which corresponded to the model with the lowest score. The final parameters were an order of (1, 1 ,1) and a seasonal order of (1, 0, 7, 7), i.e. weekly seasonality was selected for. After refitting the SARIMA model with the optimized parameters, plot_diagnostics was called in order to obtain information about the residual distribution of the model. The distribution of the residuals shown by the orange curve in the upper right panel closely resembles that of a normal distribution. The standardized residual plot emulates white noise strongly, further suggesting that the model adequately captures the relationships within the data. To support this fact, one can observe that the majority of points in the residual Q-Q diagram lie on the red line which represents the quantiles of a normal distribution. All of these evidences validate the chosen parameters of the model, though the correlogram suggests that residuals may still contain temporal dependencies, shown by numerous significant spikes appearing outside the confidence interval. Conversely, the Ljung–Box test (which was conducted across 10 lags) suggests no correlation between residuals. 
+<img width="4500" height="3600" alt="SARIMA Diagnostics" src="https://github.com/user-attachments/assets/04cc7230-0f22-4eca-864e-f86063b56b84" />
+In order to adequately evaluate the SARIMA model, a rolling-origin forecasting was used instead of the standard train-test splitting which is commonly seen in machine learning. This is where a (SARIMA) model is trained on a selected number of observations and then used to predict a small number of future observations (just one in this analysis). The training set is then augmented to include the actual observation from that future forecast period and the process is repeated until the full number of observations in the test set have been included in the training set. The resultant predictions are then compared against the actual observations of the test set. In our case, this means predicting the daily demand one day in the future and then augmenting the training set by the actually observed demand of the next day. The rolling forecast was then plotted against the actual observations to qualitatively evaluate the effectiveness of the SARIMA model. Quantitative analysis was carried out by computing the mean absolute error (MAE) and mean absolute percentage error (MAPE) between the actual values and the forecasted values. These scores were 6752.4 and respectively 
+
+<img width="880" height="493" alt="SARIMA Forecasts" src="https://github.com/user-attachments/assets/cc8d208f-117c-4509-a6e5-192ed84cd66d" />
+
+## IV. Improving Predictions with SARIMAX
+
+<img width="4500" height="3600" alt="SARIMAX Diagnostics" src="https://github.com/user-attachments/assets/01c00fd9-882f-4f4b-9acd-6209db502d6e" />
+<img width="4200" height="2400" alt="SARIMAX Forecasts" src="https://github.com/user-attachments/assets/0e0c0f2d-3ccc-4c8e-b867-fd95e8e1f10d" />
+
+CHANGE TO MAPE
+## V. Benchmarking and Final Remarks  
+<img width="1500" height="800" alt="Baseline Comparisons" src="https://github.com/user-attachments/assets/f716861f-711e-4aa6-9eab-09c1dcb8f135" />
 

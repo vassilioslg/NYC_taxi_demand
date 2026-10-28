@@ -157,7 +157,7 @@ def baseline_comparison(**kwargs):
     fig, ax = plt.subplots(figsize = (15,8))
     bar = ax.bar(['Mean Forecast','Naive Seasonal Forecast', "Previous Day Forecast", *[key.replace('_', ' ') for key in kwargs]], baseline_stats)
     ax.bar_label(bar, fmt="%.2f%%")
-    ax.set_title('Forecast MSE', fontsize = 16)
+    ax.set_title('Forecast MAPE', fontsize = 16)
     plt.tight_layout()
     fig.savefig(OUTPUT_DIR/"Baseline Comparisons.png")
 

@@ -2,7 +2,7 @@
 # Predicting Daily Yellow Taxi Demand for New York City using SARIMA / SARIMAX Time Series Analysis
 
 ## Abstract
-The aim of this project was to develop a time series model capable of predicting next day yellow taxi demand. In order to avoid the costly forecast loop used evaluating the two models, pickle files are provided which provide the predictions directly and are loaded and processed by the script immediately when it is run. To run the full analysis simply run the run.py script. 
+The aim of this project was to develop a time series model capable of predicting next day yellow taxi demand within New York City. In order to avoid the costly forecast loop used evaluating the two models, pickle files are provided which provide the predictions directly and are loaded and processed by the script immediately when it is run. To run the full analysis simply run the run.py script. 
 
 ## I. Exploratory Data Analysis
 
